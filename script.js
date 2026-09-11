@@ -170,21 +170,82 @@
     });
   }
 
-  // ---------- Contact Form Validation ----------
-  const contactForm = document.getElementById('contactForm');
-  if (contactForm) {
-    contactForm.addEventListener('submit', function (e) {
-      e.preventDefault();
+  // ---------- Contact Form (Formspree) ----------
+const contactForm = document.getElementById('contactForm');
+if (contactForm) {
+  contactForm.addEventListener('submit', function (e) {
+    e.preventDefault();
 
-      const name = document.getElementById('name');
-      const email = document.getElementById('email');
-      const phone = document.getElementById('phone');
-      const subject = document.getElementById('subject');
-      const message = document.getElementById('message');
-      const successMsg = document.getElementById('formSuccess');
+    const name = document.getElementById('name');
+    const email = document.getElementById('email');
+    const phone = document.getElementById('phone');
+    const subject = document.getElementById('subject');
+    const message = document.getElementById('message');
+    const successMsg = document.getElementById('formSuccess');
+    const submitBtn = contactForm.querySelector('button[type="submit"]');
 
-      let valid = true;
+    let valid = true;
 
+    // Clear previous errors
+    contactForm.querySelectorAll('.error-msg').forEach(el => el.remove());
+    [name, email, subject, message].forEach(f => {
+      if (f) f.style.borderColor = '';
+    });
+
+    function showError(field, msg) {
+      valid = false;
+      field.style.borderColor = '#ef4444';
+      const err = document.createElement('div');
+      err.className = 'error-msg';
+      err.style.color = '#ef4444';
+      err.style.fontSize = '0.8rem';
+      err.style.marginTop = '0.3rem';
+      err.textContent = msg;
+      field.parentNode.appendChild(err);
+    }
+
+    if (!name.value.trim()) showError(name, 'Please enter your name.');
+    if (!email.value.trim()) {
+      showError(email, 'Please enter your email.');
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) {
+      showError(email, 'Please enter a valid email address.');
+    }
+    if (subject && !subject.value) showError(subject, 'Please select a subject.');
+    if (!message.value.trim()) showError(message, 'Please enter your message.');
+
+    if (!valid) return;
+
+    // Send to Formspree
+    const originalText = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending…';
+
+    fetch(contactForm.action, {
+      method: 'POST',
+      body: new FormData(contactForm),
+      headers: { 'Accept': 'application/json' }
+    })
+    .then(response => {
+      if (response.ok) {
+        contactForm.style.display = 'none';
+        if (successMsg) {
+          successMsg.hidden = false;
+          successMsg.style.display = 'block';
+        }
+        contactForm.reset();
+      } else {
+        alert('Something went wrong. Please try again or call us.');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+      }
+    })
+    .catch(() => {
+      alert('Could not send. Please try again or contact us by phone.');
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalText;
+    });
+  });
+}
       // Reset previous errors
       contactForm.querySelectorAll('.error-msg').forEach(function (el) {
         el.remove();
